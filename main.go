@@ -1,8 +1,9 @@
 package main
 
 import (
-  "fmt"
-  "log"
+	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/juandserrano/astro-cover/model"
@@ -12,17 +13,32 @@ import (
 var ccLimit int8 = 30
 
 var sleepTime time.Duration = time.Second * 60
+var loc *time.Location
 
 func main()  {
   var lastRun time.Time
+  loc, _ = time.LoadLocation("America/Toronto")
+
+  email := os.Getenv("GMAIL_ADDRESS")
+  appPass := os.Getenv("GMAIL_ASTRO_COVER_APP_PASS")
+  if email == "" {
+    log.Printf("GMAIL_ADDRESS env must be set")
+    log.Printf("Exiting...")
+    os.Exit(1)
+  }
+  if appPass == "" {
+    log.Printf("GMAIL_ASTRO_COVER_APP_PASS env must be set")
+    log.Printf("Exiting...")
+    os.Exit(1)
+  }
 
   for {
-    now := time.Now()
+    now := time.Now().In(loc)
       log.Printf("Checking on time %s", now)
 
-    if now.Hour() == 18 && now.Sub(lastRun).Minutes() >= 100 {
+    if now.Hour() == 19 && now.Sub(lastRun).Minutes() >= 100 {
       run()
-      lastRun = time.Now()
+      lastRun = time.Now().In(loc)
     }
     time.Sleep(sleepTime)
   }
@@ -32,7 +48,7 @@ func run() {
   cover := net.FetchData()
   if cover.Cloudcover != nil {
     var notification model.Notification
-    notification.Day = time.Now().Format(time.RFC850)
+    notification.Day = time.Now().In(loc).Format(time.RFC850)
     if checkCloudCoverAtNight(&cover, &notification) {
       notification.Result = "ASTRO-COVER: Hoy es un gran dia!"
       sendNotification("OK", &notification)

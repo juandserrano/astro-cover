@@ -11,7 +11,8 @@ import (
 
 func SendEmailNotification(n *model.Notification) {
   email := os.Getenv("GMAIL_ADDRESS")
-  auth := smtp.PlainAuth("", email, os.Getenv("GMAIL_ASTRO_COVER_APP_PASS"), "smtp.gmail.com")
+  appPass := os.Getenv("GMAIL_ASTRO_COVER_APP_PASS")
+  auth := smtp.PlainAuth("", email, appPass, "smtp.gmail.com")
 	to := []string{email}
 
   var dataTable string
@@ -28,5 +29,7 @@ func SendEmailNotification(n *model.Notification) {
 	err := smtp.SendMail("smtp.gmail.com:587", auth, email, to, msg)
 	if err != nil {
     log.Printf("smtp.SendMail error: %s", err)
-	}
+	} else {
+    log.Printf("Mail sent!")
+  }
 }
